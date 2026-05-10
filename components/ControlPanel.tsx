@@ -31,7 +31,7 @@ export default function ControlPanel() {
     { key: 'emergency' as const, label: 'Emergency', icon: <Navigation size={10} />, active: showEmergencyLayer, color: '#ff2d55' },
   ];
 
-  const corridors = [...new Set(intersections.map(i => i.corridor))];
+  const corridors = Array.from(new Set(intersections.map(i => i.corridor)));
 
   return (
     <div className="hydra-panel flex flex-col h-full overflow-hidden">

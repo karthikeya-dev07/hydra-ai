@@ -282,7 +282,7 @@ export default function TrafficMap() {
       });
 
       // Corridor labels
-      const corridors = [...new Set(intersections.map(i => i.corridor))];
+      const corridors = Array.from(new Set(intersections.map(i => i.corridor).filter(Boolean))) as string[];
       corridors.forEach(corridor => {
         const group = intersections.filter(i => i.corridor === corridor);
         if (group.length === 0) return;
