@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.next/
+out/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# AI Models
+*.pt
+*.onnx
+*.engine
+runs/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Datasets (large files)
+datasets/hydra_traffic/images/
+datasets/hydra_traffic/labels/
+
+# Build
+dist/
+build/
+backend/venv/
