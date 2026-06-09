@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHydraStore } from '@/lib/store';
 import {
-  Brain, Cpu, Wifi, Settings, ChevronDown,
-  Play, Pause, Layers, AlertOctagon, Navigation2
+  Brain, Activity, AlertTriangle, Wifi, Play, Pause,
+  ChevronRight, Navigation2, Clock, Zap
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import ControlPanel from '@/components/ControlPanel';
@@ -20,10 +20,13 @@ const TrafficMap = dynamic(() => import('@/components/TrafficMap'), { ssr: false
 type SideView = 'alerts' | 'predictions' | 'camera';
 
 export default function HydraAIDashboard() {
-  const { tickSimulation, isSimulationRunning, activeScenario, emergencyCorridors } = useHydraStore();
+  const { tickSimulation, isSimulationRunning, toggleSimulation, activeScenario, emergencyCorridors, systemMetrics } = useHydraStore();
   const tickRef = useRef<NodeJS.Timeout | null>(null);
   const [sideView, setSideView] = useState<SideView>('alerts');
   const [clockStr, setClockStr] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   // Simulation tick
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function HydraAIDashboard() {
 
   // Clock
   useEffect(() => {
-    const update = () => setClockStr(new Date().toLocaleTimeString('en-IN', { hour12: false }));
+    const update = () => setClockStr(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }));
     update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
@@ -46,70 +49,73 @@ export default function HydraAIDashboard() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
-      {/* ── Top Navbar ── */}
-      <header className="flex items-center justify-between px-4 py-2 border-b border-hydra-border flex-shrink-0"
-        style={{ background: 'rgba(2,8,22,0.95)', backdropFilter: 'blur(20px)' }}>
+      <div className="scan-line" />
+
+      {/* ── Navbar ── */}
+      <header className="navbar flex items-center justify-between px-5 py-3 flex-shrink-0 z-10">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="holo-ring w-8 h-8 flex items-center justify-center">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ background: 'radial-gradient(circle, #00f5ff30, #00f5ff10)', border: '1px solid #00f5ff40' }}>
-              <Brain size={10} className="text-cyan" />
-            </div>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}>
+            <Brain size={18} color="white" />
           </div>
           <div>
-            <div className="font-display text-sm font-bold glow-cyan tracking-widest">HYDRA AI</div>
-            <div className="text-[9px] font-mono text-secondary">Behavior-Aware Traffic Intelligence</div>
-          </div>
-          <div className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded"
-            style={{ background: '#00f5ff08', border: '1px solid #00f5ff20' }}>
-            <span className="text-[9px] font-mono text-secondary">HYDERABAD</span>
-            <span className="text-[9px] font-mono text-cyan">◉ LIVE</span>
+            <div className="font-display text-base font-bold text-white tracking-tight">HYDRA AI</div>
+            <div className="text-[10px] text-secondary">Traffic Intelligence · Hyderabad</div>
           </div>
         </div>
 
-        {/* Center: Scenario badge */}
-        {hasEmergency && (
-          <motion.div
-            className="hidden md:flex items-center gap-2 px-3 py-1 rounded"
-            style={{ background: '#ff2d5510', border: '1px solid #ff2d5560' }}
-            animate={{ borderColor: ['#ff2d5540', '#ff2d55', '#ff2d5540'] }}
-            transition={{ duration: 1, repeat: Infinity }}
-          >
-            <AlertOctagon size={12} className="text-red-400" />
-            <span className="text-xs font-mono font-bold text-red-400">EMERGENCY CORRIDOR ACTIVE</span>
-          </motion.div>
-        )}
+        {/* Emergency Banner */}
+        <AnimatePresence>
+          {hasEmergency && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl emergency-active"
+              style={{ background: '#f8717110', border: '1px solid #f8717150' }}
+            >
+              <span className="text-red-400 font-bold text-xs">🚨 EMERGENCY CORRIDOR ACTIVE</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Right: Status + Clock */}
+        {/* Right */}
         <div className="flex items-center gap-4">
+          {/* Sim Toggle */}
+          <button
+            id="sim-toggle-btn"
+            onClick={toggleSimulation}
+            className="btn btn-secondary flex items-center gap-2 text-xs"
+          >
+            {isSimulationRunning ? <><Pause size={13} /> Pause</> : <><Play size={13} /> Resume</>}
+          </button>
+          {/* Status */}
           <div className="hidden md:flex items-center gap-2">
             <div className="status-dot online" />
-            <span className="text-[10px] font-mono text-secondary">AI ENGINE ONLINE</span>
+            <span className="text-xs text-secondary font-medium">AI Live</span>
           </div>
-          <div className="hidden md:flex items-center gap-1">
-            <Cpu size={10} className="text-cyan" />
-            <span className="text-[10px] font-mono text-secondary">YOLOv11 + LSTM</span>
+          <div className="hidden md:flex items-center gap-2 text-secondary">
+            <Wifi size={13} />
+            <span className="text-xs">12 feeds</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Wifi size={10} className="text-green" />
-            <span className="text-[10px] font-mono text-secondary">12 feeds</span>
+          <div className="flex items-center gap-1.5 text-white">
+            <Clock size={13} className="text-secondary" />
+            <span className="text-sm font-semibold">{mounted ? clockStr : ''}</span>
           </div>
-          <div className="font-mono text-sm text-cyan font-bold tracking-wider">{clockStr}</div>
         </div>
       </header>
 
       {/* ── Metrics Bar ── */}
-      <div className="px-3 py-2 border-b border-hydra-border flex-shrink-0 overflow-x-auto"
-        style={{ background: 'rgba(4,13,26,0.8)' }}>
+      <div className="flex-shrink-0 border-b px-4 py-2" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
         <SystemMetrics />
       </div>
 
       {/* ── Main Layout ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* Left Panel: Controls */}
-        <div className="w-56 flex-shrink-0 border-r border-hydra-border overflow-hidden hidden lg:block">
+        {/* Left Sidebar */}
+        <div className="w-60 flex-shrink-0 sidebar overflow-hidden hidden lg:flex flex-col">
           <ControlPanel />
         </div>
 
@@ -118,53 +124,53 @@ export default function HydraAIDashboard() {
           {/* Map */}
           <div className="flex-1 relative min-h-0">
             <TrafficMap />
-            {/* Intersection detail panel (slides over map) */}
             <IntersectionPanel />
           </div>
 
-          {/* Bottom: Camera Feed strip */}
-          <div className="flex-shrink-0 border-t border-hydra-border" style={{ height: 220 }}>
-            <div className="h-full flex gap-0">
-              <div className="w-[320px] flex-shrink-0 border-r border-hydra-border">
+          {/* Bottom Strip: Camera + Alerts */}
+          <div className="flex-shrink-0 border-t" style={{ borderColor: 'var(--border)', height: 220 }}>
+            <div className="h-full flex">
+              <div className="w-[300px] flex-shrink-0 border-r" style={{ borderColor: 'var(--border)' }}>
                 <CameraFeed />
               </div>
-              <div className="flex-1 p-3 overflow-y-auto">
+              <div className="flex-1 p-3 overflow-y-auto" style={{ background: 'var(--bg-secondary)' }}>
                 <AlertsPanel />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Panel: Predictions / Alerts */}
-        <div className="w-64 flex-shrink-0 border-l border-hydra-border overflow-hidden hidden xl:flex flex-col">
-          {/* Tab switcher */}
-          <div className="flex border-b border-hydra-border flex-shrink-0">
-            {(['alerts', 'predictions', 'camera'] as SideView[]).map(view => (
-              <button
-                key={view}
-                onClick={() => setSideView(view)}
-                className={`flex-1 py-2 text-[9px] font-mono uppercase tracking-widest transition-colors ${
-                  sideView === view ? 'text-cyan border-b border-cyan-400' : 'text-secondary'
-                }`}
-              >
-                {view}
-              </button>
-            ))}
+        {/* Right Sidebar */}
+        <div className="w-64 flex-shrink-0 border-l hidden xl:flex flex-col" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+          {/* Tab Bar */}
+          <div className="p-3 border-b flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+            <div className="tab-bar">
+              {(['alerts', 'predictions', 'camera'] as SideView[]).map(view => (
+                <button
+                  key={view}
+                  id={`side-tab-${view}`}
+                  onClick={() => setSideView(view)}
+                  className={`tab-btn ${sideView === view ? 'active' : ''}`}
+                >
+                  {view.charAt(0).toUpperCase() + view.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto p-3">
             <AnimatePresence mode="wait">
               {sideView === 'alerts' && (
-                <motion.div key="alerts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div key="alerts" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
                   <AlertsPanel />
                 </motion.div>
               )}
               {sideView === 'predictions' && (
-                <motion.div key="pred" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div key="pred" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
                   <PredictionPanel />
                 </motion.div>
               )}
               {sideView === 'camera' && (
-                <motion.div key="cam" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div key="cam" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
                   <CameraFeed />
                 </motion.div>
               )}
@@ -174,18 +180,14 @@ export default function HydraAIDashboard() {
       </div>
 
       {/* ── Footer ── */}
-      <footer className="px-4 py-1.5 border-t border-hydra-border flex items-center justify-between flex-shrink-0"
-        style={{ background: 'rgba(2,8,22,0.95)' }}>
-        <div className="data-stream text-[9px] w-64">
-          HYDRA AI v1.0 · HYDERABAD TRAFFIC INTELLIGENCE SYSTEM · BEHAVIOR-AWARE · PREDICTIVE · REAL-TIME
-        </div>
-        <div className="flex items-center gap-4 text-[9px] font-mono text-muted">
-          <span>YOLOv11 · DeepSORT · LSTM · GNN · RL</span>
-          <span>·</span>
-          <span>HTRIMS Compatible</span>
-          <span>·</span>
-          <span className="text-cyan">© 2025 HYDRA AI</span>
-        </div>
+      <footer className="px-5 py-2 border-t flex items-center justify-between flex-shrink-0 text-xs text-secondary"
+        style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+        <span className="flex items-center gap-2">
+          <Zap size={11} className="text-cyan" />
+          HYDRA AI v1.0 · Behavior-Aware Traffic Intelligence
+        </span>
+        <span className="hidden md:block">YOLOv11 · DeepSORT · LSTM · GNN · RL · HTRIMS Compatible</span>
+        <span style={{ color: 'var(--cyan)' }}>© 2025 HYDRA AI</span>
       </footer>
     </div>
   );

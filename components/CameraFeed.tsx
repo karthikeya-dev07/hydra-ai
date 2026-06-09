@@ -123,7 +123,7 @@ export default function CameraFeed() {
       }
 
       // Moving "vehicles" (blobs)
-      const vehicleTypes = ['car', 'bike', 'auto', 'bus'] as const;
+      const vehicleTypes = ['car', 'bike', 'auto', 'bus', 'truck'] as const;
       vehicleTypes.forEach((vt, vi) => {
         const count = intersection.vehicleCounts[vt] || 0;
         for (let k = 0; k < Math.min(count, 3); k++) {
