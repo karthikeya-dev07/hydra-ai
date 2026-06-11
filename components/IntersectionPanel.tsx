@@ -12,26 +12,41 @@ export default function IntersectionPanel() {
 
   const intersection = intersections.find(i => i.id === selectedIntersection);
 
+  let showOnRight = true;
+  if (intersection) {
+    const lngs = intersections.map(i => i.lng);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const midLng = (minLng + maxLng) / 2;
+    // If the node is on the left half (lng < midLng), show panel on the right.
+    showOnRight = intersection.lng < midLng;
+  }
+
   return (
     <AnimatePresence>
       {intersection && (
         <motion.div
           key={intersection.id}
-          initial={{ x: '100%', opacity: 0 }}
+          initial={{ x: showOnRight ? '100%' : '-100%', opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          exit={{ x: '100%', opacity: 0 }}
+          exit={{ x: showOnRight ? '100%' : '-100%', opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="absolute right-0 top-0 bottom-0 w-[360px] hydra-panel border-l border-hydra-border z-20 flex flex-col overflow-hidden"
-          style={{ background: 'rgba(2,8,22,0.95)', backdropFilter: 'blur(20px)' }}
+          className={`absolute top-0 bottom-0 w-[360px] z-30 flex flex-col overflow-hidden ${showOnRight ? 'right-0' : 'left-0'}`}
+          style={{ 
+            background: 'rgba(15,17,23,0.97)', 
+            backdropFilter: 'blur(20px)', 
+            borderLeft: showOnRight ? '1px solid var(--border)' : 'none',
+            borderRight: !showOnRight ? '1px solid var(--border)' : 'none'
+          }}
         >
           {/* Header */}
-          <div className="flex items-start justify-between p-4 border-b border-hydra-border">
+          <div className="flex items-start justify-between p-4 border-b" style={{ borderColor: 'var(--border)' }}>
             <div>
-              <div className="text-[10px] font-mono text-secondary mb-0.5 uppercase tracking-widest">
-                ◈ INTERSECTION INTELLIGENCE
+              <div className="text-[10px] font-medium text-secondary mb-0.5 uppercase tracking-widest">
+                Intersection Details
               </div>
-              <h2 className="font-display font-bold text-cyan text-sm leading-tight">{intersection.name}</h2>
-              <div className="text-[10px] font-mono text-secondary mt-0.5">
+              <h2 className="font-display font-bold text-sm leading-tight" style={{ color: 'var(--cyan)' }}>{intersection.name}</h2>
+              <div className="text-[10px] text-secondary mt-0.5">
                 {intersection.lat.toFixed(4)}°N, {intersection.lng.toFixed(4)}°E
               </div>
             </div>
@@ -39,9 +54,9 @@ export default function IntersectionPanel() {
               <RiskBadge level={intersection.predictedCongestion} size="sm" pulse={intersection.predictedCongestion === 'CRITICAL'} />
               <button
                 onClick={() => setSelectedIntersection(null)}
-                className="p-1.5 rounded hydra-card hover:border-hydra-border transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
               >
-                <X size={14} className="text-secondary" />
+                <X size={15} color="var(--text-secondary)" />
               </button>
             </div>
           </div>
@@ -79,14 +94,14 @@ export default function IntersectionPanel() {
                   countdown={intersection.countdown}
                   total={intersection.currentSignal === 'GREEN' ? intersection.greenDuration : intersection.redDuration}
                 />
-                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                <div className="grid grid-cols-2 gap-2">
                   <div className="hydra-card p-2 text-center">
-                    <div className="text-secondary text-[10px]">Green Duration</div>
-                    <div className="text-green font-bold text-sm">{intersection.greenDuration}s</div>
+                    <div className="text-[10px] text-secondary">Green Duration</div>
+                    <div className="text-sm font-bold" style={{ color: 'var(--green)' }}>{intersection.greenDuration}s</div>
                   </div>
                   <div className="hydra-card p-2 text-center">
-                    <div className="text-secondary text-[10px]">Queue</div>
-                    <div className="text-cyan font-bold text-sm">{intersection.queueLength}</div>
+                    <div className="text-[10px] text-secondary">Queue</div>
+                    <div className="text-sm font-bold" style={{ color: 'var(--cyan)' }}>{intersection.queueLength}</div>
                   </div>
                 </div>
               </div>
